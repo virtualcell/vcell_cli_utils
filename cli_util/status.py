@@ -71,6 +71,7 @@ def status_yml(omex_file, task_status, sim_status):
             dataset_dict = {}
             for dataset in reports_dict[report]:
                 dataset_dict[dataset] = 'SKIPPED'
+            # TODO: get status from resultant CSV
             outputs_dict["outputs"].update({report: {"dataSets": dataset_dict}})
             outputs_dict["outputs"][report].update({"status": "SKIPPED"})
 
