@@ -1,10 +1,8 @@
 import os
-from typing import final
 import fire
 import libcombine
 import libsedml
 import yaml
-import pprint
 import tempfile
 import zipfile
 
@@ -33,7 +31,7 @@ def extract_omex_archive(omex_file):
     return sedml_files_list
 
 
-def status_yml(omex_file):
+def status_yml(omex_file, task_status, sim_status):
     yaml_dict = {}
     
     for sedml in extract_omex_archive(omex_file):
@@ -77,7 +75,7 @@ def status_yml(omex_file):
             outputs_dict["outputs"][report].update({"status": "SKIPPED"})
 
         for task in task_list:
-            tasks_dict["tasks"].update({task: {"status": "SKIPPED"}})
+            tasks_dict["tasks"].update({task: {"status": task_status}})
 
         sed_doc_dict = {sedml: {}}
         sed_doc_dict[sedml].update(outputs_dict)
@@ -86,13 +84,15 @@ def status_yml(omex_file):
         yaml_dict[sedml] = sed_doc_dict[sedml]
     final_dict = {}
     final_dict['sedDocuments'] = dict(yaml_dict)
-    final_dict['status'] = 'SKIPPED'
-    with open("status.yml", 'w' ,encoding="utf-8") as sy:
+    final_dict['status'] = sim_status
+
+    with open("status.yml", 'w' , encoding="utf-8") as sy:
         sy.write(yaml.dump(final_dict))
-
-
+    # return final_dict
 
 
 if __name__ == "__main__":
-    fire.Fire(status_yml)
+    fire.Fire({
+        'status_yml': status_yml,
+    })
     

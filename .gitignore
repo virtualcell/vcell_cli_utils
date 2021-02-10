@@ -120,3 +120,4 @@ tests/results/
 
 *.tmp
 .vscode/
+status.yml
