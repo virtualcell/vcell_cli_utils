@@ -1,2 +1,3 @@
 biosimulators_utils
 fire
+pyyaml
