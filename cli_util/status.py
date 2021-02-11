@@ -105,9 +105,32 @@ def update_status(sedml: str, task: str, status: str):
     # Update task status
     yaml_dict['sedDocuments'][sedml]['tasks'][task]['status'] = status
 
+    # TODO: Update SEDML status on task status update
+
     # Convert json to yaml # Save new yaml
     with open('status.yml', 'w') as f:
         f.write(yaml.dump(yaml_dict))
+
+def update_dataset_status(sedml: str, dataset: str, var: str, status: str):
+
+    # Import yaml
+    yaml_str = ''
+    with open('status.yml', 'r') as sy:
+        yaml_str = sy.read()
+    
+    # Convert yaml to json
+    yaml_dict = yaml.load(yaml_str)
+
+    # Update task status
+    yaml_dict['sedDocuments'][sedml]['outputs'][dataset]['dataSets'][var] = status
+
+    # TODO: Update Dataset status on var status update
+
+    # Convert json to yaml # Save new yaml
+    with open('status.yml', 'w') as f:
+        f.write(yaml.dump(yaml_dict))
+
+    
 
 def sim_status(status: str):
     # Import yaml
@@ -131,5 +154,6 @@ if __name__ == "__main__":
         'genStatusYaml': status_yml,
         'updateTaskStatus': update_status,
         'simStatus': sim_status,
+        'updateDataSetStatus': update_dataset_status,
     })
     
