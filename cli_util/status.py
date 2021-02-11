@@ -128,6 +128,7 @@ def sim_status(status: str):
 
 if __name__ == "__main__":
     fire.Fire({
+        'genStatusYaml': status_yml,
         'updateStatus': update_status,
         'simStatus': sim_status,
     })
