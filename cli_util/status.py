@@ -98,7 +98,7 @@ def get_yaml_as_str(yaml_path: str):
         yaml_str = sy.read()
     
     # Convert yaml to json
-    yaml_dict = yaml.load(yaml_str)
+    yaml_dict = yaml.load(yaml_str, yaml.SafeLoader)
 
     return yaml_dict
 
@@ -142,7 +142,7 @@ def update_dataset_status(sedml: str, report: str, dataset: str, status: str):
                 else:
                     yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'FAILED'
         except KeyError:
-            print(f"{key} not found.")
+            continue
 
     # Convert json to yaml # Save new yaml
     dump_yaml_dict("status.yml", yaml_dict=yaml_dict)
