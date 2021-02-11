@@ -70,22 +70,22 @@ def status_yml(omex_file):
         for report in list(reports_dict.keys()):
             dataset_dict = {}
             for dataset in reports_dict[report]:
-                dataset_dict[dataset] = 'SKIPPED'
+                dataset_dict[dataset] = 'QUEUED'
             # TODO: get status from resultant CSV
             outputs_dict["outputs"].update({report: {"dataSets": dataset_dict}})
-            outputs_dict["outputs"][report].update({"status": "SKIPPED"})
+            outputs_dict["outputs"][report].update({"status": "QUEUED"})
 
         for task in task_list:
-            tasks_dict["tasks"].update({task: {"status": "SKIPPED"}})
+            tasks_dict["tasks"].update({task: {"status": "QUEUED"}})
 
         sed_doc_dict = {sedml: {}}
         sed_doc_dict[sedml].update(outputs_dict)
         sed_doc_dict[sedml].update(tasks_dict)
-        sed_doc_dict[sedml].update({"status": "SKIPPED"})
+        sed_doc_dict[sedml].update({"status": "QUEUED"})
         yaml_dict[sedml] = sed_doc_dict[sedml]
     final_dict = {}
     final_dict['sedDocuments'] = dict(yaml_dict)
-    final_dict['status'] = "SKIPPED"
+    final_dict['status'] = "QUEUED"
 
     with open("status.yml", 'w' , encoding="utf-8") as sy:
         sy.write(yaml.dump(final_dict))
