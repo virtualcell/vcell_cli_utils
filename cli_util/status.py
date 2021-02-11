@@ -135,11 +135,14 @@ def update_dataset_status(sedml: str, report: str, dataset: str, status: str):
 
     # update individual dataSets status
     for key in yaml_dict['sedDocuments'][sedml]['outputs'].keys():
-        for dataset_key in yaml_dict['sedDocuments'][sedml]['outputs'][key]['dataSets'].keys():
-            if yaml_dict['sedDocuments'][sedml]['outputs'][key]['dataSets'][dataset_key] == 'QUEUED' or 'SUCCEEDED':
-                yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'SUCCEEDED'
-            else:
-                yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'FAILED'
+        try:
+            for dataset_key in yaml_dict['sedDocuments'][sedml]['outputs'][key]['dataSets'].keys():
+                if yaml_dict['sedDocuments'][sedml]['outputs'][key]['dataSets'][dataset_key] == 'QUEUED' or 'SUCCEEDED':
+                    yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'SUCCEEDED'
+                else:
+                    yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'FAILED'
+        except KeyError:
+            print(f"{key} not found.")
 
     # Convert json to yaml # Save new yaml
     dump_yaml_dict("status.yml", yaml_dict=yaml_dict)
