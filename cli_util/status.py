@@ -91,62 +91,69 @@ def status_yml(omex_file):
         sy.write(yaml.dump(final_dict))
     # return final_dict
 
-
-def update_status(sedml: str, task: str, status: str):
-
+def get_yaml_as_str(yaml_path: str):
     # Import yaml
     yaml_str = ''
-    with open('status.yml', 'r') as sy:
+    with open(yaml_path, 'r') as sy:
         yaml_str = sy.read()
     
     # Convert yaml to json
     yaml_dict = yaml.load(yaml_str)
+
+    return yaml_dict
+
+def dump_yaml_dict(yaml_path: str, yaml_dict: str):
+    with open(yaml_path, 'w' , encoding="utf-8") as sy:
+        sy.write(yaml.dump(yaml_dict))
+
+
+def update_status(sedml: str, task: str, status: str):
+
+    # Hardcoded because name is static
+    yaml_dict = get_yaml_as_str("status.yml")
 
     # Update task status
     yaml_dict['sedDocuments'][sedml]['tasks'][task]['status'] = status
 
-    # TODO: Update SEDML status on task status update
+    # update individual SED-ML status
+    for key in yaml_dict['sedDocuments'][sedml]['tasks'].keys():
+        if yaml_dict['sedDocuments'][sedml]['tasks'][key]['status'] == 'QUEUED' or 'SUCCEEDED':
+            yaml_dict['sedDocuments'][sedml]['status'] = 'SUCCEEDED'
+        else:
+            yaml_dict['sedDocuments'][sedml]['status'] = 'FAILED'
 
     # Convert json to yaml # Save new yaml
-    with open('status.yml', 'w') as f:
-        f.write(yaml.dump(yaml_dict))
+    dump_yaml_dict("status.yml", yaml_dict=yaml_dict)
 
-def update_dataset_status(sedml: str, dataset: str, var: str, status: str):
 
-    # Import yaml
-    yaml_str = ''
-    with open('status.yml', 'r') as sy:
-        yaml_str = sy.read()
-    
-    # Convert yaml to json
-    yaml_dict = yaml.load(yaml_str)
+def update_dataset_status(sedml: str, report: str, dataset: str, status: str):
+
+    yaml_dict = get_yaml_as_str("status.yml")
 
     # Update task status
-    yaml_dict['sedDocuments'][sedml]['outputs'][dataset]['dataSets'][var] = status
+    yaml_dict['sedDocuments'][sedml]['outputs'][report]['dataSets'][dataset] = status
 
-    # TODO: Update Dataset status on var status update
+    # update individual dataSets status
+    for key in yaml_dict['sedDocuments'][sedml]['outputs'].keys():
+        for dataset_key in yaml_dict['sedDocuments'][sedml]['outputs'][key]['dataSets'].keys():
+            if yaml_dict['sedDocuments'][sedml]['outputs'][key]['dataSets'][dataset_key] == 'QUEUED' or 'SUCCEEDED':
+                yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'SUCCEEDED'
+            else:
+                yaml_dict['sedDocuments'][sedml]['outputs'][key]['status'] = 'FAILED'
 
     # Convert json to yaml # Save new yaml
-    with open('status.yml', 'w') as f:
-        f.write(yaml.dump(yaml_dict))
+    dump_yaml_dict("status.yml", yaml_dict=yaml_dict)
 
     
-
 def sim_status(status: str):
-    # Import yaml
-    yaml_str = ''
-    with open('status.yml', 'r') as sy:
-        yaml_str = sy.read()
-    
-    # Convert yaml to json
-    yaml_dict = yaml.load(yaml_str)
+
+    yaml_dict = get_yaml_as_str("status.yml")
 
     # Update simulation status
     yaml_dict['status'] = status
 
     # Convert json to yaml # Save new yaml
-    with open('status.yml', 'w') as f:
-        f.write(yaml.dump(yaml_dict))
+    dump_yaml_dict("status.yml", yaml_dict=yaml_dict)
 
 
 if __name__ == "__main__":
