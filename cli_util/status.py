@@ -31,7 +31,7 @@ def extract_omex_archive(omex_file):
     return sedml_files_list
 
 
-def status_yml(omex_file, task_status, sim_status):
+def status_yml(omex_file):
     yaml_dict = {}
     
     for sedml in extract_omex_archive(omex_file):
@@ -76,7 +76,7 @@ def status_yml(omex_file, task_status, sim_status):
             outputs_dict["outputs"][report].update({"status": "SKIPPED"})
 
         for task in task_list:
-            tasks_dict["tasks"].update({task: {"status": task_status}})
+            tasks_dict["tasks"].update({task: {"status": "SKIPPED"}})
 
         sed_doc_dict = {sedml: {}}
         sed_doc_dict[sedml].update(outputs_dict)
@@ -85,15 +85,50 @@ def status_yml(omex_file, task_status, sim_status):
         yaml_dict[sedml] = sed_doc_dict[sedml]
     final_dict = {}
     final_dict['sedDocuments'] = dict(yaml_dict)
-    final_dict['status'] = sim_status
+    final_dict['status'] = "SKIPPED"
 
     with open("status.yml", 'w' , encoding="utf-8") as sy:
         sy.write(yaml.dump(final_dict))
     # return final_dict
 
 
+def update_status(sedml: str, task: str, status: str):
+
+    # Import yaml
+    yaml_str = ''
+    with open('status.yml', 'r') as sy:
+        yaml_str = sy.read()
+    
+    # Convert yaml to json
+    yaml_dict = yaml.load(yaml_str)
+
+    # Update task status
+    yaml_dict['sedDocuments'][sedml]['tasks'][task]['status'] = status
+
+    # Convert json to yaml # Save new yaml
+    with open('status.yml', 'w') as f:
+        f.write(yaml.dump(yaml_dict))
+
+def sim_status(status: str):
+    # Import yaml
+    yaml_str = ''
+    with open('status.yml', 'r') as sy:
+        yaml_str = sy.read()
+    
+    # Convert yaml to json
+    yaml_dict = yaml.load(yaml_str)
+
+    # Update simulation status
+    yaml_dict['status'] = status
+
+    # Convert json to yaml # Save new yaml
+    with open('status.yml', 'w') as f:
+        f.write(yaml.dump(yaml_dict))
+
+
 if __name__ == "__main__":
     fire.Fire({
-        'status_yml': status_yml,
+        'updateStatus': update_status,
+        'simStatus': sim_status,
     })
     
