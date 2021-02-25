@@ -9,7 +9,7 @@ from biosimulators_utils.sedml.io import SedmlSimulationReader
 import fire
 import glob
 import os
-import pandas
+import pandas as pd
 import shutil
 import tempfile
 
@@ -67,6 +67,13 @@ def exec_sed_doc(sedml_file_path, working_dir, base_out_path, csv_dir, rel_out_p
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
 
+def transpose_vcml_csv(csv_file_path: str):
+    pd.read_csv(csv_file_path, header=None).transpose().dropna().to_csv(csv_file_path, header=False, index=False)
+
 
 if __name__ == "__main__":
-    fire.Fire(exec_sed_doc)
+    fire.Fire({
+        'execSedDoc': exec_sed_doc,
+        'transposeVcmlCsv': transpose_vcml_csv,
+    })
+
