@@ -68,7 +68,10 @@ def exec_sed_doc(sedml_file_path, working_dir, base_out_path, csv_dir, rel_out_p
         os.makedirs(out_dir)
 
 def transpose_vcml_csv(csv_file_path: str):
-    pd.read_csv(csv_file_path, header=None).transpose().dropna().to_csv(csv_file_path, header=False, index=False)
+    df =  pd.read_csv(csv_file_path, header=None);
+    cols = list(df.columns)
+    final_cols = [col for col in cols if col!='']
+    df[final_cols].transpose().to_csv(csv_file_path, header=False, index=False)
 
 
 if __name__ == "__main__":
