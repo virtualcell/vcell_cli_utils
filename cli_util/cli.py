@@ -25,7 +25,7 @@ def exec_sed_doc(sedml_file_path, working_dir, base_out_path, csv_dir, rel_out_p
         report_id = os.path.splitext(os.path.basename(report_filename))[0]
 
         # read report from CSV file produced by VCell
-        data_set_df = pandas.read_csv(report_filename).transpose()
+        data_set_df = pd.read_csv(report_filename).transpose()
         data_set_df.columns = data_set_df.iloc[0]
         data_set_df = data_set_df.drop(data_set_df.iloc[0].name)
         data_set_df = data_set_df.reset_index()
