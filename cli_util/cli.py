@@ -51,7 +51,6 @@ def exec_sed_doc(omex_file_path, base_out_path):
                 data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
                 )
 
-            data_resutls_arr.append(data_set_results)
             # append to data structure of report results
             report_results[report_id] = data_set_results
 
