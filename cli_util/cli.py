@@ -1,11 +1,10 @@
-
-from biosimulators_utils.combine.exec import exec_sedml_docs_in_archive
 from biosimulators_utils.log.data_model import Status, CombineArchiveLog, SedDocumentLog  # noqa: F401
 from biosimulators_utils.plot.data_model import PlotFormat  # noqa: F401
 from biosimulators_utils.report.data_model import DataSetResults, ReportResults, ReportFormat  # noqa: F401
 from biosimulators_utils.report.io import ReportWriter
-from biosimulators_utils.sedml.data_model import Task, Report, DataSet, Plot2D, Curve, Plot3D, Surface
 from biosimulators_utils.sedml.io import SedmlSimulationReader
+from biosimulators_utils.combine.utils import get_sedml_contents
+from biosimulators_utils.combine.io import CombineArchiveReader
 import fire
 import glob
 import os
@@ -14,63 +13,64 @@ import shutil
 import tempfile
 
 
-def exec_sed_doc(sedml_file_path, working_dir, base_out_path, csv_dir, rel_out_path=None,
-                 apply_xml_model_changes=True, report_formats=None, plot_formats=None,
-                 log=None, indent=0):
+def exec_sed_doc(omex_file_path, base_out_path):
+    archive_tmp_dir = tempfile.mkdtemp()
 
-    tmp_out_dir = csv_dir
-    doc = SedmlSimulationReader().run(sedml_file_path)
+    # defining archive
+    archive = CombineArchiveReader.run(omex_file_path, archive_tmp_dir)
+
+    # determine files to execute
+    sedml_contents = get_sedml_contents(archive)
+
     report_results = ReportResults()
-    for report_filename in glob.glob(os.path.join(tmp_out_dir, '*.csv')):
-        report_id = os.path.splitext(os.path.basename(report_filename))[0]
+    data_resutls_arr = []
+    for i_content, content in enumerate(sedml_contents):
+        content_filename = os.path.join(archive_tmp_dir, content.location)
+        content_id = os.path.relpath(content_filename, archive_tmp_dir)
 
-        # read report from CSV file produced by VCell
-        data_set_df = pd.read_csv(report_filename).transpose()
-        data_set_df.columns = data_set_df.iloc[0]
-        data_set_df = data_set_df.drop(data_set_df.iloc[0].name)
-        data_set_df = data_set_df.reset_index()
-        data_set_df = data_set_df.rename(
-            columns={'index': data_set_df.columns.name})
-        data_set_df = data_set_df.transpose()
-        data_set_df.index.name = None
+        doc = SedmlSimulationReader().run(content_filename)
 
-        report = next(
-            report for report in doc.outputs if report.id == report_id)
-        data_set_results = DataSetResults()
-        for data_set in report.data_sets:
-            data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
-            )
+        for report_filename in glob.glob(os.path.join(base_out_path, content.location, '*.csv')):
+            report_id = os.path.splitext(os.path.basename(report_filename))[0]
 
-        # append to data structure of report results
-        report_results[report_id] = data_set_results
+            # read report from CSV file produced by VCell
+            data_set_df = pd.read_csv(report_filename).transpose()
+            data_set_df.columns = data_set_df.iloc[0]
+            data_set_df = data_set_df.drop(data_set_df.iloc[0].name)
+            data_set_df = data_set_df.reset_index()
+            data_set_df = data_set_df.rename(
+                columns={'index': data_set_df.columns.name})
+            data_set_df = data_set_df.transpose()
+            data_set_df.index.name = None
 
-        # save file in desired BioSimulators format(s)
-        # for report_format in report_formats:
-        ReportWriter().run(report,
-                           data_set_results,
-                           base_out_path,
-                           os.path.join(
-                               rel_out_path, report_id) if rel_out_path else report_id,
-                           format='h5')
-        # for report_format in report_formats:
-        #     ReportWriter().run(report,
-        #                        data_set_results,
-        #                        base_out_path,
-        #                        os.path.join(rel_out_path, report_id) if rel_out_path else report_id,
-        #                        format=report_format)
+            report = next(
+                report for report in doc.outputs if report.id == report_id)
 
-    # Move the plot outputs to the permanent output directory
-    out_dir = base_out_path
-    if rel_out_path:
-        out_dir = os.path.join(out_dir, rel_out_path)
+            data_set_results = DataSetResults()
+            for data_set in report.data_sets:
+                data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
+                )
 
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
+            data_resutls_arr.append(data_set_results)
+            # append to data structure of report results
+            report_results[report_id] = data_set_results
+
+            # save file in desired BioSimulators format(s)
+            # for report_format in report_formats:
+            ReportWriter().run(report,
+                               data_set_results,
+                               base_out_path,
+                               os.path.join(content.location, report.id),
+                               format='h5')
+
+    ## Remove temp directory
+    shutil.rmtree(archive_tmp_dir)
+
 
 def transpose_vcml_csv(csv_file_path: str):
-    df =  pd.read_csv(csv_file_path, header=None);
+    df = pd.read_csv(csv_file_path, header=None);
     cols = list(df.columns)
-    final_cols = [col for col in cols if col!='']
+    final_cols = [col for col in cols if col != '']
     df[final_cols].transpose().to_csv(csv_file_path, header=False, index=False)
 
 
@@ -79,4 +79,3 @@ if __name__ == "__main__":
         'execSedDoc': exec_sed_doc,
         'transposeVcmlCsv': transpose_vcml_csv,
     })
-
