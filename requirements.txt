@@ -1,3 +1,7 @@
 biosimulators_utils
 fire
 pyyaml
+pandas
+matplotlib
+seaborn
+python-libsedml
