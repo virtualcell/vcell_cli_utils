@@ -27,7 +27,6 @@ def exec_sed_doc(omex_file_path, base_out_path):
     sedml_contents = get_sedml_contents(archive)
 
     report_results = ReportResults()
-    data_resutls_arr = []
     for i_content, content in enumerate(sedml_contents):
         content_filename = os.path.join(archive_tmp_dir, content.location)
         content_id = os.path.relpath(content_filename, archive_tmp_dir)
@@ -71,7 +70,7 @@ def exec_sed_doc(omex_file_path, base_out_path):
 
 
 def transpose_vcml_csv(csv_file_path: str):
-    df = pd.read_csv(csv_file_path, header=None);
+    df = pd.read_csv(csv_file_path, header=None)
     cols = list(df.columns)
     final_cols = [col for col in cols if col != '']
     df[final_cols].transpose().to_csv(csv_file_path, header=False, index=False)

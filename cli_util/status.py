@@ -1,7 +1,6 @@
 import os
 from os.path import basename
 import fire
-import libcombine
 from biosimulators_utils.archive.io import ArchiveReader
 import libsedml
 import yaml
@@ -12,8 +11,6 @@ import shutil
 
 # Create temp directory
 tmp_dir = tempfile.mkdtemp()
-
-
 
 def extract_omex_archive(omex_file):
     if not os.path.isfile(omex_file):
@@ -31,8 +28,6 @@ def extract_omex_archive(omex_file):
             sedml_files_list.append(sed[1])
 
     return sedml_files_list
-
-
 
 
 def status_yml(omex_file: str, out_dir: str):
@@ -69,13 +64,12 @@ def status_yml(omex_file: str, out_dir: str):
             for curve in plots_dict[plot]:
                 curves_dict[curve] = 'SKIPPED'
             outputs_dict["outputs"].update({plot: {"curves": curves_dict}})
-            outputs_dict["outputs"][plot].update({"status": "SKIPPED"})
+            outputs_dict["outputs"][plot].update({"status": "SUCCEEDED"})
 
         for report in list(reports_dict.keys()):
             dataset_dict = {}
             for dataset in reports_dict[report]:
                 dataset_dict[dataset] = 'QUEUED'
-            # TODO: get status from resultant CSV
             outputs_dict["outputs"].update({report: {"dataSets": dataset_dict}})
             outputs_dict["outputs"][report].update({"status": "QUEUED"})
 
@@ -115,8 +109,6 @@ def dump_yaml_dict(yaml_path: str, yaml_dict: str):
 
 
 def update_status(sedml: str, task: str, status: str, out_dir: str):
-
-
 
     # Hardcoded because name is static
     yaml_dict = get_yaml_as_str(os.path.join(out_dir, "status.yml"))
