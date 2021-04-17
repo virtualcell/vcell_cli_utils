@@ -64,7 +64,7 @@ def status_yml(omex_file: str, out_dir: str):
             for curve in plots_dict[plot]:
                 curves_dict[curve] = 'SUCCEEDED'
             outputs_dict["outputs"].update({plot: {"curves": curves_dict}})
-            outputs_dict["outputs"][plot].update({"status": "SKIPPED"})
+            outputs_dict["outputs"][plot].update({"status": "SUCCEEDED"})
 
         for report in list(reports_dict.keys()):
             dataset_dict = {}
@@ -175,4 +175,3 @@ if __name__ == "__main__":
         'simStatus': sim_status,
         'updateDataSetStatus': update_dataset_status,
     })
-    
