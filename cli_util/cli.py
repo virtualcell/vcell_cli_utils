@@ -17,19 +17,20 @@ import seaborn as sns
 import libsedml as lsed
 from libsedml import SedReport, SedPlot2D
 
-def exec_sed_doc(omex_file_path, base_out_path):
-    archive_tmp_dir = tempfile.mkdtemp()
+# Move status PY code here
+# Create temp directory
+tmp_dir = tempfile.mkdtemp()
 
+def exec_sed_doc(omex_file_path, base_out_path):
     # defining archive
-    archive = CombineArchiveReader.run(omex_file_path, archive_tmp_dir)
+    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=tmp_dir, try_reading_as_plain_zip_archive=True)
 
     # determine files to execute
     sedml_contents = get_sedml_contents(archive)
 
     report_results = ReportResults()
     for i_content, content in enumerate(sedml_contents):
-        content_filename = os.path.join(archive_tmp_dir, content.location)
-        content_id = os.path.relpath(content_filename, archive_tmp_dir)
+        content_filename = os.path.join(tmp_dir, content.location)
 
         doc = SedmlSimulationReader().run(content_filename)
 
@@ -66,7 +67,7 @@ def exec_sed_doc(omex_file_path, base_out_path):
                                format='h5')
 
     ## Remove temp directory
-    shutil.rmtree(archive_tmp_dir)
+    shutil.rmtree(tmp_dir)
 
 
 def transpose_vcml_csv(csv_file_path: str):
