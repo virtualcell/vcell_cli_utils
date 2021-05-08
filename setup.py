@@ -1,32 +1,47 @@
-from distutils.core import setup
+import re
+from setuptools import setup
+import subprocess
+import sys
+try:
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "show", "pkg_utils"],
+        check=True, capture_output=True)
+    match = re.search(r'\nVersion: (.*?)\n', result.stdout.decode(), re.DOTALL)
+    assert match and tuple(match.group(1).split('.')) >= ('0', '0', '5')
+except (subprocess.CalledProcessError, AssertionError):
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-U", "pkg_utils"],
+        check=True)
+import os
+import pkg_utils
+
+name = 'vcell_cli_utils'
+dirname = os.path.join(os.path.dirname(__file__))
+package_data = {
+    name: [],
+}
+
+# get package metadata
+md = pkg_utils.get_package_metadata(dirname, name)
+
+# install package
 setup(
-  name = 'vcell_cli_utils',
-  packages = ['cli_util'],
-  version = '0.1',
-  license='MIT',
-  description = 'Python utility package for VCell CLI Java App',
-  author = 'Virtual Cell',
-  author_email = 'marupilla@uchc.edu',
-  url = 'https://github.com/virtualcell/vcell_cli_utils',
-  download_url = 'https://github.com/virtualcell/vcell_cli_utils/archive/refs/tags/0.1.tar.gz',
-  keywords = ['HDF5', 'Visualization', 'YAML', 'Fire'],
-  install_requires=[
-      'biosimulators_utils', 
-      'fire', 
-      'pyyaml', 
-      'pandas', 
-      'matplotlib', 
-      'seaborn', 
-      'python-libsedml' 
-      ],
-  classifiers=[
-    'Development Status :: 3 - Alpha',
-    'Intended Audience :: Developers',
-    'Topic :: Software Development :: Build Tools',
-    'License :: OSI Approved :: MIT License', 
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.4',
-    'Programming Language :: Python :: 3.5',
-    'Programming Language :: Python :: 3.6',
-  ],
+    name=name,
+    version=md.version,
+    description=(
+        "Python utility package for VCell CLI Java App"
+    ),
+    long_description='README.rst',
+    url="https://github.com/virtualcell/vcell_cli_utils",
+    download_url='https://github.com/virtualcell/vcell_cli_utils',
+    author='Virtual Cell',
+    author_email="marupilla@uchc.edu",
+    license="MIT",
+    keywords=['HDF5', 'Visualization', 'YAML', 'Fire'],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+    ],
 )
