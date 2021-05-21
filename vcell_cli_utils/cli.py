@@ -5,6 +5,7 @@ from biosimulators_utils.report.io import ReportWriter
 from biosimulators_utils.sedml.io import SedmlSimulationReader
 from biosimulators_utils.combine.utils import get_sedml_contents
 from biosimulators_utils.combine.io import CombineArchiveReader
+from biosimulators_utils.sedml.data_model import Output, Report, Plot2D, Plot3D
 import fire
 import glob
 import os
@@ -16,6 +17,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import libsedml as lsed
 from libsedml import SedReport, SedPlot2D
+import sys
 
 # Move status PY code here
 # Create temp directory
@@ -51,15 +53,35 @@ def exec_sed_doc(omex_file_path, base_out_path):
                 report for report in doc.outputs if report.id == report_id)
 
             data_set_results = DataSetResults()
-            for data_set in report.data_sets:
-                data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
-                )
+
+            print("report: ", report, file=sys.stderr)
+            print("report Type: ", type(report), file=sys.stderr)
+            print("Plot Type: ", Plot2D, file=sys.stderr)
+            if type(report) != Plot2D and type(report) != Plot3D:
+                # Considering the scenario where it has the datasets in sedml
+                for data_set in report.data_sets:
+                    data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
+                    )
+            else:
+                data_set_df = pd.read_csv(report_filename,header=None).T
+                data_set_df.columns = data_set_df.iloc[0]
+                data_set_df.drop(0,inplace=True)
+                data_set_df.reset_index(inplace=True)
+                data_set_df.drop('index', axis=1, inplace=True)
+                print("DF for plot: ", data_set_df, file=sys.stderr)
+                # Considering the scenario where it doesn't have datasets in sedml (pseudo sedml for plots)
+                for col in list(data_set_df.columns):
+                    data_set_results[col] = data_set_df[col].values
 
             # append to data structure of report results
             report_results[report_id] = data_set_results
 
             # save file in desired BioSimulators format(s)
             # for report_format in report_formats:
+            print("HDF report: ", report, file=sys.stderr)
+            print("HDF dataset results: ", data_set_results, file=sys.stderr)
+            print("HDF base_out_path: ", base_out_path,file=sys.stderr)
+            print("HDF path: ", os.path.join(content.location, report.id), file=sys.stderr)
             ReportWriter().run(report,
                                data_set_results,
                                base_out_path,
