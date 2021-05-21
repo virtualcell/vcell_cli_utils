@@ -90,7 +90,10 @@ def exec_sed_doc(omex_file_path, base_out_path):
                                    os.path.join(content.location, report.id),
                                    format='h5')
             else:
-                report.data_sets = [DataSet()]
+                datasets = []
+                for col in list(data_set_df.columns):
+                    datasets.append(DataSet(id=col, label=col, name=col))
+                report.data_sets = datasets
                 ReportWriter().run(report,
                                    data_set_results,
                                    base_out_path,
