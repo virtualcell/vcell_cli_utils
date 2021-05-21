@@ -5,7 +5,7 @@ from biosimulators_utils.report.io import ReportWriter
 from biosimulators_utils.sedml.io import SedmlSimulationReader
 from biosimulators_utils.combine.utils import get_sedml_contents
 from biosimulators_utils.combine.io import CombineArchiveReader
-from biosimulators_utils.sedml.data_model import Output, Report, Plot2D, Plot3D
+from biosimulators_utils.sedml.data_model import Output, Report, Plot2D, Plot3D, DataSet
 import fire
 import glob
 import os
@@ -82,11 +82,20 @@ def exec_sed_doc(omex_file_path, base_out_path):
             print("HDF dataset results: ", data_set_results, file=sys.stderr)
             print("HDF base_out_path: ", base_out_path,file=sys.stderr)
             print("HDF path: ", os.path.join(content.location, report.id), file=sys.stderr)
-            ReportWriter().run(report,
-                               data_set_results,
-                               base_out_path,
-                               os.path.join(content.location, report.id),
-                               format='h5')
+
+            if type(report) != Plot2D and type(report) != Plot3D:
+                ReportWriter().run(report,
+                                   data_set_results,
+                                   base_out_path,
+                                   os.path.join(content.location, report.id),
+                                   format='h5')
+            else:
+                report.data_sets = [DataSet()]
+                ReportWriter().run(report,
+                                   data_set_results,
+                                   base_out_path,
+                                   os.path.join(content.location, report.id),
+                                   format='h5')
 
     ## Remove temp directory
     shutil.rmtree(tmp_dir)
