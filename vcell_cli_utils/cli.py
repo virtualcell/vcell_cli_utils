@@ -2,7 +2,7 @@ from biosimulators_utils.log.data_model import Status, CombineArchiveLog, SedDoc
 from biosimulators_utils.plot.data_model import PlotFormat  # noqa: F401
 from biosimulators_utils.report.data_model import DataSetResults, ReportResults, ReportFormat  # noqa: F401
 from biosimulators_utils.report.io import ReportWriter
-from biosimulators_utils.sedml.io import SedmlSimulationReader
+from biosimulators_utils.sedml.io import SedmlSimulationReader, SedmlSimulationWriter
 from biosimulators_utils.combine.utils import get_sedml_contents
 from biosimulators_utils.combine.io import CombineArchiveReader
 from biosimulators_utils.sedml.data_model import Output, Report, Plot2D, Plot3D, DataSet
@@ -18,10 +18,111 @@ import seaborn as sns
 import libsedml as lsed
 from libsedml import SedReport, SedPlot2D
 import sys
+import stat
 
 # Move status PY code here
 # Create temp directory
 tmp_dir = tempfile.mkdtemp()
+
+def gen_sedml_2d_3d(omex_file_path, base_out_path):
+
+    temp_path = os.path.join(base_out_path, "temp")
+    if not os.path.exists(temp_path):
+        os.mkdir(temp_path, stat.S_IRWXU|stat.S_IRWXG|stat.S_IRWXO)
+
+    # defining archive
+    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=temp_path, try_reading_as_plain_zip_archive=False)
+
+    # determine files to execute
+    sedml_contents = get_sedml_contents(archive)
+
+    for i_content, content in enumerate(sedml_contents):
+        content_filename = os.path.join(temp_path, content.location)
+
+        doc = SedmlSimulationReader().run(content_filename)
+        for output in doc.outputs:
+            if isinstance(output, (Plot2D, Plot3D)):
+                report = Report(
+                    id='__plot__' + output.id,
+                    name=output.name)
+
+                data_generators = {}
+                if isinstance(output, Plot2D):
+                    for curve in output.curves:
+                        data_generators[curve.x_data_generator.id] = curve.x_data_generator
+                        data_generators[curve.y_data_generator.id] = curve.y_data_generator
+
+                elif isinstance(output, Plot3D):
+                    for surface in output.surfaces:
+                        data_generators[surface.x_data_generator.id] = surface.x_data_generator
+                        data_generators[surface.y_data_generator.id] = surface.y_data_generator
+                        data_generators[surface.z_data_generator.id] = surface.z_data_generator
+
+                for data_generator in data_generators.values():
+                    report.data_sets.append(DataSet(
+                        id='__data_set__{}_{}'.format(output.id, data_generator.id),
+                        name=data_generator.name,
+                        label=data_generator.id,
+                        data_generator=data_generator,
+                    ))
+
+                report.data_sets.sort(key=lambda data_set: data_set.id)
+                doc.outputs.append(report)
+
+        filename_with_reports_for_plots = os.path.join(temp_path, 'simulation.sedml')
+        SedmlSimulationWriter().run(doc, filename_with_reports_for_plots, validate_models_with_languages=False)
+
+
+def exec_plot_output_sed_doc(omex_file_path, base_out_path):
+    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=tmp_dir, try_reading_as_plain_zip_archive=True)
+
+    # determine files to execute
+    sedml_contents = get_sedml_contents(archive)
+
+    report_results = ReportResults()
+    for i_content, content in enumerate(sedml_contents):
+        content_filename = os.path.join(tmp_dir, content.location)
+
+
+        for report_filename in glob.glob(os.path.join(base_out_path, content.location,'*.csv')):
+            if report_filename.find('__plot__') != -1:
+                report_id = os.path.splitext(os.path.basename(report_filename))[0]
+
+                # read report from CSV file produced by tellurium
+                # data_set_df = pd.read_csv(report_filename).transpose()
+
+                data_set_df = pd.read_csv(report_filename,header=None).T
+                data_set_df.columns = data_set_df.iloc[0]
+                data_set_df.drop(0,inplace=True)
+                data_set_df.reset_index(inplace=True)
+                data_set_df.drop('index', axis=1, inplace=True)
+
+                # create pseudo-report for ReportWriter
+                datasets = []
+                for col in list(data_set_df.columns):
+                    datasets.append(DataSet(id=col, label=col, name=col))
+                #report.data_sets = datasets
+                report = Report(id=report_id, name=report_id, data_sets=datasets)
+
+
+                data_set_results = DataSetResults()
+
+                for col in list(data_set_df.columns):
+                    data_set_results[col] = data_set_df[col].values
+
+                # append to data structure of report results
+
+                # save file in desired BioSimulators format(s)
+                export_id = report_id.replace('__plot__', '')
+                report.id = export_id
+
+                ReportWriter().run(report,
+                                   data_set_results,
+                                   base_out_path,
+                                   os.path.join(content.location, report.id),
+                                   format='h5')
+                os.rename(report_filename, report_filename.replace('__plot__', ''))
+
 
 def exec_sed_doc(omex_file_path, base_out_path):
     # defining archive
@@ -203,8 +304,50 @@ def gen_plot_pdfs(sedml_path, result_out_dir):
     plot_and_save_curves(all_plot_curves, report_frames, result_out_dir)
 
 
+def gen_plots_for_sed2d_only(sedml_path, result_out_dir):
+    all_plot_curves = {}
+    all_report_dataref = {}
+
+    sedml = lsed.readSedML(sedml_path)
+    print(sedml)
+
+    for output in sedml.getListOfOutputs():
+        print(output)
+        if type(output) == SedPlot2D:
+            all_curves = {}
+            for curve in output.getListOfCurves():
+                print(curve)
+                all_curves[curve.getId()] = {
+                    'x': curve.getXDataReference(),
+                    'y': curve.getYDataReference()
+                }
+            all_plot_curves[output.getId()] = all_curves
+
+    all_plots = dict(all_plot_curves)
+    for plot, curve_dat in all_plots.items():
+        dims = (12, 8)
+        fig, ax = plt.subplots(figsize=dims)
+        for curve, data in curve_dat.items():
+            df = pd.read_csv(os.path.join(result_out_dir, plot + '.csv'), header=None).T
+            df.columns = df.iloc[0]
+            df.drop(0,inplace=True)
+            df.reset_index(inplace=True)
+            df.drop('index', axis=1, inplace=True)
+
+
+
+            sns.lineplot(x=df[data['x']].astype(np.float), y=df[data['y']].astype(np.float), ax=ax, label=curve)
+            ax.set_ylabel('')
+            #             plt.show()
+            plt.savefig(os.path.join(result_out_dir, plot + '.pdf'), dpi=300)
+
+
+
 if __name__ == "__main__":
     fire.Fire({
+        'genSedml2d3d': gen_sedml_2d_3d,
+        'execPlotOutputSedDoc': exec_plot_output_sed_doc,
+        'genPlotsPseudoSedml': gen_plots_for_sed2d_only,
         'execSedDoc': exec_sed_doc,
         'transposeVcmlCsv': transpose_vcml_csv,
         'genPlotPdfs': gen_plot_pdfs,

@@ -135,7 +135,10 @@ def update_dataset_status(sedml: str, report: str, dataset: str, status: str, ou
     yaml_dict = get_yaml_as_str(os.path.join(out_dir, "status.yml"))
     sedml_name_nested = [i for i in list(yaml_dict['sedDocuments'].keys()) if sedml.endswith(i)][0]
     # Update task status
-    yaml_dict['sedDocuments'][sedml_name_nested]['outputs'][report]['dataSets'][dataset] = status
+    try:
+        yaml_dict['sedDocuments'][sedml_name_nested]['outputs'][report]['dataSets'][dataset] = status
+    except KeyError:
+        pass
 
     # update individual dataSets status
     for key in yaml_dict['sedDocuments'][sedml_name_nested]['outputs'].keys():
