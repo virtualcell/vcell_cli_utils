@@ -22,7 +22,7 @@ package_data = {
 }
 
 # get package metadata
-md = pkg_utils.get_package_metadata(dirname, name)
+md = pkg_utils.get_package_metadata(dirname, name, package_data_filename_patterns=package_data)
 
 # install package
 setup(
@@ -38,6 +38,9 @@ setup(
     author_email="marupilla@uchc.edu",
     license="MIT",
     keywords=['HDF5', 'Visualization', 'YAML', 'Fire'],
+    install_requires=md.install_requires,
+    extras_require=md.extras_require,
+    dependency_links=md.dependency_links,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
