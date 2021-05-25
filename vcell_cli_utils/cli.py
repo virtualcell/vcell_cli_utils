@@ -155,9 +155,9 @@ def exec_sed_doc(omex_file_path, base_out_path):
 
             data_set_results = DataSetResults()
 
-            print("report: ", report, file=sys.stderr)
-            print("report Type: ", type(report), file=sys.stderr)
-            print("Plot Type: ", Plot2D, file=sys.stderr)
+            # print("report: ", report, file=sys.stderr)
+            # print("report Type: ", type(report), file=sys.stderr)
+            # print("Plot Type: ", Plot2D, file=sys.stderr)
             if type(report) != Plot2D and type(report) != Plot3D:
                 # Considering the scenario where it has the datasets in sedml
                 for data_set in report.data_sets:
@@ -169,7 +169,7 @@ def exec_sed_doc(omex_file_path, base_out_path):
                 data_set_df.drop(0,inplace=True)
                 data_set_df.reset_index(inplace=True)
                 data_set_df.drop('index', axis=1, inplace=True)
-                print("DF for plot: ", data_set_df, file=sys.stderr)
+                # print("DF for plot: ", data_set_df, file=sys.stderr)
                 # Considering the scenario where it doesn't have datasets in sedml (pseudo sedml for plots)
                 for col in list(data_set_df.columns):
                     data_set_results[col] = data_set_df[col].values
@@ -179,10 +179,10 @@ def exec_sed_doc(omex_file_path, base_out_path):
 
             # save file in desired BioSimulators format(s)
             # for report_format in report_formats:
-            print("HDF report: ", report, file=sys.stderr)
-            print("HDF dataset results: ", data_set_results, file=sys.stderr)
-            print("HDF base_out_path: ", base_out_path,file=sys.stderr)
-            print("HDF path: ", os.path.join(content.location, report.id), file=sys.stderr)
+            # print("HDF report: ", report, file=sys.stderr)
+            # print("HDF dataset results: ", data_set_results, file=sys.stderr)
+            # print("HDF base_out_path: ", base_out_path,file=sys.stderr)
+            # print("HDF path: ", os.path.join(content.location, report.id), file=sys.stderr)
 
             if type(report) != Plot2D and type(report) != Plot3D:
                 ReportWriter().run(report,
