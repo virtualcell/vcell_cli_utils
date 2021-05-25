@@ -1,7 +1,7 @@
 from biosimulators_utils.log.data_model import Status, CombineArchiveLog, SedDocumentLog  # noqa: F401
 from biosimulators_utils.plot.data_model import PlotFormat  # noqa: F401
 from biosimulators_utils.report.data_model import DataSetResults, ReportResults, ReportFormat  # noqa: F401
-from biosimulators_utils.report.io import ReportWriter
+from biosimulators_utils.report.io import ReportWriter, ReportReader
 from biosimulators_utils.sedml.io import SedmlSimulationReader, SedmlSimulationWriter
 from biosimulators_utils.combine.utils import get_sedml_contents
 from biosimulators_utils.combine.io import CombineArchiveReader
@@ -161,8 +161,9 @@ def exec_sed_doc(omex_file_path, base_out_path):
             if type(report) != Plot2D and type(report) != Plot3D:
                 # Considering the scenario where it has the datasets in sedml
                 for data_set in report.data_sets:
-                    data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
-                    )
+                    data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(dtype ='float64')
+                    # print("DF for report: ", data_set_results[data_set.id], file=sys.stderr)
+                    # print("df.types: ", data_set_results[data_set.id].dtype, file=sys.stderr)
             else:
                 data_set_df = pd.read_csv(report_filename,header=None).T
                 data_set_df.columns = data_set_df.iloc[0]
