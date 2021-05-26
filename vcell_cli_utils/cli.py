@@ -38,6 +38,7 @@ def gen_sedml_2d_3d(omex_file_path, base_out_path):
 
     for i_content, content in enumerate(sedml_contents):
         content_filename = os.path.join(temp_path, content.location)
+        sedml_name = content.location.split('/')[1].split('.')[0]
 
         doc = SedmlSimulationReader().run(content_filename)
         for output in doc.outputs:
@@ -69,7 +70,7 @@ def gen_sedml_2d_3d(omex_file_path, base_out_path):
                 report.data_sets.sort(key=lambda data_set: data_set.id)
                 doc.outputs.append(report)
 
-        filename_with_reports_for_plots = os.path.join(temp_path, 'simulation.sedml')
+        filename_with_reports_for_plots = os.path.join(temp_path, f'simulation_{sedml_name}.sedml')
         SedmlSimulationWriter().run(doc, filename_with_reports_for_plots, validate_models_with_languages=False)
 
 
@@ -310,14 +311,14 @@ def gen_plots_for_sed2d_only(sedml_path, result_out_dir):
     all_report_dataref = {}
 
     sedml = lsed.readSedML(sedml_path)
-    print(sedml)
+    # print(sedml)
 
     for output in sedml.getListOfOutputs():
-        print(output)
+        # print(output)
         if type(output) == SedPlot2D:
             all_curves = {}
             for curve in output.getListOfCurves():
-                print(curve)
+                # print(curve)
                 all_curves[curve.getId()] = {
                     'x': curve.getXDataReference(),
                     'y': curve.getYDataReference()
