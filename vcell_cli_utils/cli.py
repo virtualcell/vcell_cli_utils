@@ -294,7 +294,7 @@ def plot_and_save_curves(all_plot_curves, report_frames, result_out_dir):
             df = report_frames[data['report']]
             df.to_csv(os.path.join(result_out_dir, plot + '.csv'), index = False, header=True)
             transpose_vcml_csv(os.path.join(result_out_dir, plot + '.csv'))
-            sns.lineplot(x=df[data['x']].astype(np.float), y=df[data['y']].astype(np.float), ax=ax, label=curve)
+            sns.lineplot(x=df[data['x']].astype(np.float64), y=df[data['y']].astype(np.float64), ax=ax, label=curve)
             ax.set_ylabel('')
         #         plt.show()
         plt.savefig(os.path.join(result_out_dir, plot + '.pdf'), dpi=300)
