@@ -1,1 +1,2 @@
-# VCell_CLI Utils for converting CSV to HDF5 format
+# VCell_CLI Utils
+[![PyPI version](https://badge.fury.io/py/vcell-cli-utils.svg)](https://badge.fury.io/py/vcell-cli-utils)
