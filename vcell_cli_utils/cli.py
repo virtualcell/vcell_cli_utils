@@ -116,11 +116,11 @@ def exec_plot_output_sed_doc(omex_file_path, base_out_path):
                 # save file in desired BioSimulators format(s)
                 export_id = report_id.replace('__plot__', '')
                 report.id = export_id
-
+                rel_path=os.path.join(content.location, report.id).split("./")[1]
                 ReportWriter().run(report,
                                    data_set_results,
                                    base_out_path,
-                                   os.path.join(content.location, report.id),
+                                   rel_path,
                                    format='h5')
                 os.rename(report_filename, report_filename.replace('__plot__', ''))
 
@@ -186,11 +186,13 @@ def exec_sed_doc(omex_file_path, base_out_path):
             # print("HDF base_out_path: ", base_out_path,file=sys.stderr)
             # print("HDF path: ", os.path.join(content.location, report.id), file=sys.stderr)
 
+            rel_path=os.path.join(content.location, report.id).split("./")[1]
+            print(rel_path)
             if type(report) != Plot2D and type(report) != Plot3D:
                 ReportWriter().run(report,
                                    data_set_results,
                                    base_out_path,
-                                   os.path.join(content.location, report.id),
+                                   rel_path,
                                    format='h5')
             else:
                 datasets = []
@@ -200,7 +202,7 @@ def exec_sed_doc(omex_file_path, base_out_path):
                 ReportWriter().run(report,
                                    data_set_results,
                                    base_out_path,
-                                   os.path.join(content.location, report.id),
+                                   rel_path,
                                    format='h5')
 
     ## Remove temp directory
