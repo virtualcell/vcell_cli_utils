@@ -24,14 +24,16 @@ import stat
 # Create temp directory
 tmp_dir = tempfile.mkdtemp()
 
+
 def gen_sedml_2d_3d(omex_file_path, base_out_path):
 
     temp_path = os.path.join(base_out_path, "temp")
     if not os.path.exists(temp_path):
-        os.mkdir(temp_path, stat.S_IRWXU|stat.S_IRWXG|stat.S_IRWXO)
+        os.mkdir(temp_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     # defining archive
-    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=temp_path, try_reading_as_plain_zip_archive=False)
+    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=temp_path,
+                                         try_reading_as_plain_zip_archive=False)
 
     # determine files to execute
     sedml_contents = get_sedml_contents(archive)
@@ -61,7 +63,8 @@ def gen_sedml_2d_3d(omex_file_path, base_out_path):
 
                 for data_generator in data_generators.values():
                     report.data_sets.append(DataSet(
-                        id='__data_set__{}_{}'.format(output.id, data_generator.id),
+                        id='__data_set__{}_{}'.format(
+                            output.id, data_generator.id),
                         name=data_generator.name,
                         label=data_generator.id,
                         data_generator=data_generator,
@@ -70,12 +73,15 @@ def gen_sedml_2d_3d(omex_file_path, base_out_path):
                 report.data_sets.sort(key=lambda data_set: data_set.id)
                 doc.outputs.append(report)
 
-        filename_with_reports_for_plots = os.path.join(temp_path, f'simulation_{sedml_name}.sedml')
-        SedmlSimulationWriter().run(doc, filename_with_reports_for_plots, validate_models_with_languages=False)
+        filename_with_reports_for_plots = os.path.join(
+            temp_path, f'simulation_{sedml_name}.sedml')
+        SedmlSimulationWriter().run(doc, filename_with_reports_for_plots,
+                                    validate_models_with_languages=False)
 
 
 def exec_plot_output_sed_doc(omex_file_path, base_out_path):
-    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=tmp_dir, try_reading_as_plain_zip_archive=True)
+    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=tmp_dir,
+                                         try_reading_as_plain_zip_archive=True)
 
     # determine files to execute
     sedml_contents = get_sedml_contents(archive)
@@ -84,17 +90,17 @@ def exec_plot_output_sed_doc(omex_file_path, base_out_path):
     for i_content, content in enumerate(sedml_contents):
         content_filename = os.path.join(tmp_dir, content.location)
 
-
-        for report_filename in glob.glob(os.path.join(base_out_path, content.location,'*.csv')):
+        for report_filename in glob.glob(os.path.join(base_out_path, content.location, '*.csv')):
             if report_filename.find('__plot__') != -1:
-                report_id = os.path.splitext(os.path.basename(report_filename))[0]
+                report_id = os.path.splitext(
+                    os.path.basename(report_filename))[0]
 
                 # read report from CSV file produced by tellurium
                 # data_set_df = pd.read_csv(report_filename).transpose()
 
-                data_set_df = pd.read_csv(report_filename,header=None).T
+                data_set_df = pd.read_csv(report_filename, header=None).T
                 data_set_df.columns = data_set_df.iloc[0]
-                data_set_df.drop(0,inplace=True)
+                data_set_df.drop(0, inplace=True)
                 data_set_df.reset_index(inplace=True)
                 data_set_df.drop('index', axis=1, inplace=True)
 
@@ -103,8 +109,8 @@ def exec_plot_output_sed_doc(omex_file_path, base_out_path):
                 for col in list(data_set_df.columns):
                     datasets.append(DataSet(id=col, label=col, name=col))
                 #report.data_sets = datasets
-                report = Report(id=report_id, name=report_id, data_sets=datasets)
-
+                report = Report(id=report_id, name=report_id,
+                                data_sets=datasets)
 
                 data_set_results = DataSetResults()
 
@@ -116,18 +122,23 @@ def exec_plot_output_sed_doc(omex_file_path, base_out_path):
                 # save file in desired BioSimulators format(s)
                 export_id = report_id.replace('__plot__', '')
                 report.id = export_id
-                rel_path=os.path.join(content.location, report.id).split("./")[1]
+                rel_path = os.path.join(
+                    content.location, report.id)
+                if len(rel_path.split("./")) > 1:
+                    rel_path = rel_path.split("./")[1]
                 ReportWriter().run(report,
                                    data_set_results,
                                    base_out_path,
                                    rel_path,
                                    format='h5')
-                os.rename(report_filename, report_filename.replace('__plot__', ''))
+                os.rename(report_filename,
+                          report_filename.replace('__plot__', ''))
 
 
 def exec_sed_doc(omex_file_path, base_out_path):
     # defining archive
-    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=tmp_dir, try_reading_as_plain_zip_archive=True)
+    archive = CombineArchiveReader().run(in_file=omex_file_path, out_dir=tmp_dir,
+                                         try_reading_as_plain_zip_archive=True)
 
     # determine files to execute
     sedml_contents = get_sedml_contents(archive)
@@ -162,13 +173,14 @@ def exec_sed_doc(omex_file_path, base_out_path):
             if type(report) != Plot2D and type(report) != Plot3D:
                 # Considering the scenario where it has the datasets in sedml
                 for data_set in report.data_sets:
-                    data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(dtype ='float64')
+                    data_set_results[data_set.id] = data_set_df.loc[data_set.label, :].to_numpy(
+                        dtype='float64')
                     # print("DF for report: ", data_set_results[data_set.id], file=sys.stderr)
                     # print("df.types: ", data_set_results[data_set.id].dtype, file=sys.stderr)
             else:
-                data_set_df = pd.read_csv(report_filename,header=None).T
+                data_set_df = pd.read_csv(report_filename, header=None).T
                 data_set_df.columns = data_set_df.iloc[0]
-                data_set_df.drop(0,inplace=True)
+                data_set_df.drop(0, inplace=True)
                 data_set_df.reset_index(inplace=True)
                 data_set_df.drop('index', axis=1, inplace=True)
                 # print("DF for plot: ", data_set_df, file=sys.stderr)
@@ -186,8 +198,11 @@ def exec_sed_doc(omex_file_path, base_out_path):
             # print("HDF base_out_path: ", base_out_path,file=sys.stderr)
             # print("HDF path: ", os.path.join(content.location, report.id), file=sys.stderr)
 
-            rel_path=os.path.join(content.location, report.id).split("./")[1]
-            print(rel_path)
+            rel_path = os.path.join(content.location, report.id)
+
+            if len(rel_path.split("./")) > 1:
+                rel_path = rel_path.split("./")[1]
+
             if type(report) != Plot2D and type(report) != Plot3D:
                 ReportWriter().run(report,
                                    data_set_results,
@@ -205,7 +220,7 @@ def exec_sed_doc(omex_file_path, base_out_path):
                                    rel_path,
                                    format='h5')
 
-    ## Remove temp directory
+    # Remove temp directory
     shutil.rmtree(tmp_dir)
 
 
@@ -248,9 +263,7 @@ def get_all_dataref_and_curves(sedml_path):
                         'data_label': dataset.getLabel()
                     })
 
-
     return all_report_dataref, all_plot_curves
-
 
 
 def get_report_label_from_data_ref(dataref: str, all_report_dataref):
@@ -260,32 +273,36 @@ def get_report_label_from_data_ref(dataref: str, all_report_dataref):
                 return report, data_ref['data_label']
 
 
-### Update plots dict
+# Update plots dict
 
 def update_dataref_with_report_label(all_report_dataref, all_plot_curves):
 
-    for plot,curves in all_plot_curves.items():
-        for curve_name,datarefs in curves.items():
+    for plot, curves in all_plot_curves.items():
+        for curve_name, datarefs in curves.items():
             new_ref = dict(datarefs)
-            new_ref['x'] = get_report_label_from_data_ref(datarefs['x'], all_report_dataref)[1]
-            new_ref['y'] = get_report_label_from_data_ref(datarefs['y'], all_report_dataref)[1]
-            new_ref['report'] = get_report_label_from_data_ref(datarefs['y'], all_report_dataref)[0]
+            new_ref['x'] = get_report_label_from_data_ref(
+                datarefs['x'], all_report_dataref)[1]
+            new_ref['y'] = get_report_label_from_data_ref(
+                datarefs['y'], all_report_dataref)[1]
+            new_ref['report'] = get_report_label_from_data_ref(
+                datarefs['y'], all_report_dataref)[0]
             curves[curve_name] = new_ref
 
     return all_report_dataref, all_plot_curves
-
 
 
 def get_report_dataframes(all_report_dataref, result_out_dir):
     report_frames = {}
     reports_list = list(set(all_report_dataref.keys()))
     for report in reports_list:
-        report_frames[report] = pd.read_csv(os.path.join(result_out_dir, report + ".csv")).T.reset_index()
+        report_frames[report] = pd.read_csv(os.path.join(
+            result_out_dir, report + ".csv")).T.reset_index()
         report_frames[report].columns = report_frames[report].iloc[0].values
-        report_frames[report].drop(index = 0, inplace=True)
+        report_frames[report].drop(index=0, inplace=True)
     return report_frames
 
-## PLOTTING
+# PLOTTING
+
 
 def plot_and_save_curves(all_plot_curves, report_frames, result_out_dir):
     all_plots = dict(all_plot_curves)
@@ -294,16 +311,21 @@ def plot_and_save_curves(all_plot_curves, report_frames, result_out_dir):
         fig, ax = plt.subplots(figsize=dims)
         for curve, data in curve_dat.items():
             df = report_frames[data['report']]
-            df.to_csv(os.path.join(result_out_dir, plot + '.csv'), index = False, header=True)
+            df.to_csv(os.path.join(result_out_dir, plot + '.csv'),
+                      index=False, header=True)
             transpose_vcml_csv(os.path.join(result_out_dir, plot + '.csv'))
-            sns.lineplot(x=df[data['x']].astype(np.float64), y=df[data['y']].astype(np.float64), ax=ax, label=curve)
+            sns.lineplot(x=df[data['x']].astype(
+                np.float64), y=df[data['y']].astype(np.float64), ax=ax, label=curve)
             ax.set_ylabel('')
         #         plt.show()
         plt.savefig(os.path.join(result_out_dir, plot + '.pdf'), dpi=300)
 
+
 def gen_plot_pdfs(sedml_path, result_out_dir):
-    all_report_dataref, all_plot_curves = get_all_dataref_and_curves(sedml_path)
-    all_report_dataref, all_plot_curves =  update_dataref_with_report_label(all_report_dataref, all_plot_curves)
+    all_report_dataref, all_plot_curves = get_all_dataref_and_curves(
+        sedml_path)
+    all_report_dataref, all_plot_curves = update_dataref_with_report_label(
+        all_report_dataref, all_plot_curves)
     report_frames = get_report_dataframes(all_report_dataref, result_out_dir)
     plot_and_save_curves(all_plot_curves, report_frames, result_out_dir)
 
@@ -332,19 +354,18 @@ def gen_plots_for_sed2d_only(sedml_path, result_out_dir):
         dims = (12, 8)
         fig, ax = plt.subplots(figsize=dims)
         for curve, data in curve_dat.items():
-            df = pd.read_csv(os.path.join(result_out_dir, plot + '.csv'), header=None).T
+            df = pd.read_csv(os.path.join(
+                result_out_dir, plot + '.csv'), header=None).T
             df.columns = df.iloc[0]
-            df.drop(0,inplace=True)
+            df.drop(0, inplace=True)
             df.reset_index(inplace=True)
             df.drop('index', axis=1, inplace=True)
 
-
-
-            sns.lineplot(x=df[data['x']].astype(np.float), y=df[data['y']].astype(np.float), ax=ax, label=curve)
+            sns.lineplot(x=df[data['x']].astype(
+                np.float), y=df[data['y']].astype(np.float), ax=ax, label=curve)
             ax.set_ylabel('')
             #             plt.show()
             plt.savefig(os.path.join(result_out_dir, plot + '.pdf'), dpi=300)
-
 
 
 if __name__ == "__main__":
